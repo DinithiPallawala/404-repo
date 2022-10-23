@@ -112,3 +112,14 @@ for product in products:
   table.write(line, 4, discount)
   line += 1
 workbook.save('odelDealProducts.xls')  
+
+
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+import re
+
+html=urlopen("https://en.wikipedia.org/wiki/Main_Page")
+bs=BeautifulSoup(html)
+heads=bs.find_all('img')
+for image in images:
+ print(image['src']+"\n")
