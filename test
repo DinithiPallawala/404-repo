@@ -123,3 +123,49 @@ bs=BeautifulSoup(html)
 heads=bs.find_all('img')
 for image in images:
  print(image['src']+"\n")
+
+
+***********************************************************************************************************************************************
+
+
+#creating the worksheet table
+workbook = Workbook(encoding = 'utf-8')
+table = workbook.add_sheet('data')
+table.write(0, 0, 'Number')
+table.write(0, 1, 'movie_url')
+table.write(0, 2, 'movie_name')
+table.write(0, 3, 'movie_introduction')
+line = 1
+
+url = "https://www.imdb.com/chart/top/"
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE'
+    }
+f = requests.get(url, headers = headers)
+movies_lst = []
+soup = BeautifulSoup(f.content,'lxml')
+movies = soup.find('table', {'class': 'chart full-width'}).find_all('td', {'class': 'titleColumn'})
+links = [movie.find_all('a') for movie in movies]
+print(*links)
+
+num = 0
+for anchor in links:
+  urls = 'https://www.imdb.com' + anchor[0]['href']
+  movies_lst.append(urls)
+  num += 1
+  movie_url = urls
+  movie_f = requests.get(movie_url, headers = headers)
+  movie_soup = BeautifulSoup(movie_f.content, 'lxml')
+  movie_content = movie_soup.find('span', {'data-testid': 'plot-xl'})
+  movie_name = movie_soup.find('div', {'class': 'sc-80d4314-1 fbQftq'}).find_all('h1')
+  print(num, urls, '\n', 'Movie:' + movie_name[0].string.strip())
+  print(movie_content.string.strip())
+  print('Movie info:' + movie_content.string)
+
+  #writing into the worksheet table
+  table.write(line, 0, num)
+  table.write(line, 1, urls)
+  table.write(line, 2, movie_name[0].string.strip())
+  table.write(line, 3, movie_content.string)
+  line += 1
+workbook.save('topIMDBMovies.xls')
