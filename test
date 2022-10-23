@@ -33,3 +33,82 @@ for card in cards:
   #print(f"Discount: {discount} | Product ID: {prod_no} | Product Name: {prod_name} | Previous Price: {prev_price} | Price: {price}")
 
   data.to_excel('Data.xlsx', index=False)
+  
+  
+ *************************************************************************************************************************************************
+ 
+ import requests
+import re
+import openpyxl
+from bs4 import BeautifulSoup
+
+excel = openpyxl.Workbook()
+excelS = excel.active
+excelS.append(["Product Number" ,"Product Name" ,"New Price" ,"Old Price" ,"discount" ])
+
+try:
+  soures = requests.get('https://odel.lk/deal-products')
+  soures.raise_for_status
+
+  soup = BeautifulSoup(soures.text, 'html.parser')
+  products = soup.find('div', class_='row', id=re.compile('search_result$')).find_all(class_="col-sm-6 col-md-4 col-lg-3 p-b-35 product-tile-search")
+  num = 1
+  for product in products:
+    productNumber = num
+    name = product.find("div", class_="block2-txt-child1 flex-col-l").a.text.strip()
+    price = product.find("span", class_="stext-105 cl3").text.strip().replace('LKR ', '')
+    oldPrice = product.find("del").text.strip().replace('LKR ', '')
+    discount = product.find("div", class_="product_tag_discount").text
+    num = num + 1
+    excelS.append([productNumber ,name ,price ,oldPrice ,discount ])
+    
+
+
+except Exception as e:
+  print(e)
+  exit()
+
+excel.save(filename = 'Product Details.xlsx')
+
+
+
+****************************************************************************************************************************
+
+#creating the excel worksheet
+workbook = Workbook(encoding = 'utf-8')
+table = workbook.add_sheet('sheet1')
+table.write(0, 0, 'Product Number')
+table.write(0, 1, 'Product Name')
+table.write(0, 2, 'Old Price')
+table.write(0, 3, 'New Price')
+table.write(0, 4, 'Discount')
+line = 1
+
+url = "https://odel.lk/deal-products"
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE' }
+p = requests.get(url, headers = headers)
+product_list = []
+soup = BeautifulSoup(p.content, 'lxml') 
+#print(soup)
+products = soup.find('div', {'class': 'container'}).find_all('div', {'class' : 'col-sm-6 col-md-4 col-lg-3 p-b-35 product-tile-search'})
+#print(products)
+num = 0
+for product in products:
+  num += 1
+  productNumber = num
+  productName = product.find('div', {'class' : 'block2'}).find('a', {'class' : 'stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6'}).string.strip()
+  #print(productName)
+  oldPrice = product.find('div', {'class' : 'block2'}).find('del').string.strip()
+  #print(oldPrice)
+  newPrice = product.find('div', {'class' : 'block2'}).find('span', {'class' : 'stext-105 cl3'}).string.strip()
+  #print(newPrice)
+  discount = product.find('div', {'class' : 'block2'}).find('div', {'class' : 'product_tag_discount'}).string.strip()
+  #print(discount)
+  #writing into workbook
+  table.write(line, 0, productNumber)
+  table.write(line, 1, productName)
+  table.write(line, 2, oldPrice)
+  table.write(line, 3, newPrice)
+  table.write(line, 4, discount)
+  line += 1
+workbook.save('odelDealProducts.xls')  
