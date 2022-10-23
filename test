@@ -1,0 +1,35 @@
+from bs4 import BeautifulSoup
+import requests
+import pandas as pd
+
+URL = 'https://odel.lk/deal-products'
+page = requests.get(URL)
+
+soup = BeautifulSoup(page.content, 'lxml')
+
+data = pd.DataFrame(columns=['Product ID', 'Product Name', 'Current Price', 'Previous Price', 'Discount'])
+cards = soup.find_all('div', class_='col-sm-6 col-md-4 col-lg-3 p-b-35 product-tile-search')
+print(*cards)
+for card in cards:
+  discount = card.find('div', class_='product_tag_discount').text
+  prod_no = card.find('div', class_='block2-pic hov-img0').a['href'].split('/')[-1]
+  prod_name = card.find('div', class_='block2-txt-child1 flex-col-l').a.text.strip()
+
+  price = card.find('span', class_='stext-105 cl3').text.strip()
+  prev_price = card.find('del').text.strip() 
+
+  data_dict = {
+      'Product ID': prod_no,
+      'Product Name': prod_name,
+      'Current Price': price,
+      'Previous Price': prev_price,
+      'Discount': discount
+  }
+
+  df = pd.DataFrame(data_dict, index=[0])
+  data = data.append(df, ignore_index=True)
+
+
+  #print(f"Discount: {discount} | Product ID: {prod_no} | Product Name: {prod_name} | Previous Price: {prev_price} | Price: {price}")
+
+  data.to_excel('Data.xlsx', index=False)
